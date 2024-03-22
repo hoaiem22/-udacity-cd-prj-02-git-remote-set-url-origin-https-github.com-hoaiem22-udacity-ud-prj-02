@@ -30,13 +30,35 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util.js';
     /**************************************************************************** */
 
   //! END @TODO1
+  app.get("/filteredimage", async (req, res) => {
+    let { image_url } = req.query;
   
-  // Root Endpoint
-  // Displays a simple message to the user
-  app.get( "/", async (req, res) => {
-    res.send("try GET /filteredimage?image_url={{}}")
-  } );
+    if (!image_url) {
+      res.status(400).send("Image Url must be not empty!");
+    }
   
+    // check the image_url is valid
+    try {
+      new URL(image_url);
+    } catch (error) {
+      return res.status(400).send({ message: "The image_url is not valid" });
+    }
+  
+    // check the image exists and is accessible
+    // const response = await axios.head(image_url);
+    // if (response.status !== 200) {
+    //   return res.status(400).send({ message: 'The image is not accessible' });
+    // }
+  
+    try {
+      const filteredImage = await filterImageFromURL(image_url);
+      res.sendFile(filteredImage, () => deleteLocalFiles([filteredImage]));
+    } catch (error) {
+      console.log(error);
+      res.status(422).send({ message: "Unable to process image at the provided url" });
+    }
+    // res.send("try GET /filteredimage?image_url={{}}");
+  });
 
   // Start the Server
   app.listen( port, () => {
